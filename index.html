@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Blake</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; background-color: #050505; font-family: 'Press Start 2P', cursive; overflow: hidden; touch-action: none; }
+        
+        #gantz-ball {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 350px; height: 350px;
+            background: radial-gradient(circle at 40% 40%, #222222, #000000 70%);
+            border-radius: 50%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            animation: shake 0.5s ease-in-out infinite;
+            box-shadow: inset -50px -50px 100px #000, 0 0 20px rgba(0,0,0,0.8);
+            text-align: center;
+            padding: 20px;
+            z-index: 2;
+        }
+
+        #system-log { 
+            position: absolute; top: 20px; right: 20px; width: 320px; 
+            color: #888888; 
+            font-size: 8px; 
+            text-shadow: 0 0 5px #444444; 
+            line-height: 2; 
+        }
+        
+        #main-data { 
+            font-size: 14px; 
+            color: #888888; 
+            text-shadow: 0 0 5px #444444; 
+            line-height: 2;
+        }
+
+        #quote-container { 
+            margin-top: 15px; 
+            font-size: 8px; 
+            color: #888888; 
+            text-shadow: 0 0 5px #444444;
+            width: 80%;    
+            line-height: 1.4; 
+            word-wrap: break-word;
+        }
+
+        #fire-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; cursor: crosshair; }
+
+        @keyframes shake {
+            0% { transform: translate(-50%, -50%) translate(2px, 2px); }
+            50% { transform: translate(-50%, -50%) translate(-2px, -4px); }
+            100% { transform: translate(-50%, -50%) translate(0, 0); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-50%, -80%); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fire-canvas"></canvas>
+    <div id="system-log"></div>
+    <div id="gantz-ball">
+        <div id="main-data"></div>
+        <div id="quote-container"></div>
+    </div>
+
+    <script>
+        const quoteLibrary = [
+        "SILENCE IS NOT EMPTY; IT IS FULL OF THE ANSWERS YOU REFUSE TO HEAR.", 
+        "YOU ARE A GHOST DRIVING A MEAT MACHINE. STEER IT WELL.",
+        "THE UNIVERSE DOES NOT CARE IF YOU ARE READY. IT ONLY CARES THAT YOU ARE PRESENT.", 
+        "EVERY ENDING IS A DEBT PAID. ARE YOU BANKRUPT YET?",
+        "THE RADIANCE BLINDS THOSE WHO REFUSE TO SEE THE DARKNESS WITHIN.", 
+        "IF YOU LOOK FOR MEANING, YOU WILL FIND CHAOS. IF YOU LOOK FOR PURPOSE, YOU WILL FIND WORK.",
+        "TIME IS A LUXURY OF THE LIVING. SPEND IT LIKE YOU ARE ALREADY BROKE.", 
+        "TO SURVIVE IS TO ADAPT. TO LIVE IS TO FORGET WHY YOU STARTED.",
+        "THERE IS NO DESTINY. THERE IS ONLY THE CONSEQUENCE OF YOUR LAST DECISION.", "PAIN IS THE ONLY HONEST TEACHER. ARE YOU A GOOD STUDENT?",
+        "THE VOID IS NOT ASKING FOR YOUR PERMISSION TO EXIST.", "YOUR IDENTITY IS A COSTUME YOU HAVE WORN TOO LONG. TAKE IT OFF.",
+        "THE TARGET IS NOT A PERSON. THE TARGET IS YOUR OWN HESITATION.", "BREATHING IS AUTOMATIC. LIVING IS A CHOICE YOU MUST MAKE EVERY SECOND.",
+        "WHAT YOU FEAR IS A SHADOW. SHADOWS DISAPPEAR WHEN YOU TURN ON THE LIGHT.", "THE PAST IS A GRAVEYARD. DO NOT GO THERE LOOKING FOR SIGNS OF LIFE.",
+        "YOU WERE BORN WITHOUT ASKING. YOU WILL DIE WITHOUT CONSENT. OWN THE INTERVAL.", "THE SYSTEM IS PERFECT. YOUR INTERPRETATION IS THE ONLY ERROR.",
+        "WHEN EVERYTHING IS TAKEN AWAY, YOU ARE FINALLY FREE TO BECOME SOMETHING ELSE.", "FOCUS ON THE TARGET, ELIMINATE THE THREAT, AND SURVIVE.",
+        "STARS DIE SO YOU CAN SEE THE LIGHT. WHAT ARE YOU WILLING TO CONSUME?", "MEMORY IS JUST A FADING SIGNAL. STOP TRYING TO BOOST THE STRENGTH.",
+        "THE ARCHITECT IS ABSENT. THE BUILDING IS CRUMBLING. ENJOY THE VIEW.", "YOU CALL IT ANXIETY; THE UNIVERSE CALLS IT CALIBRATION.",
+        "EVERY STEP IS A SURRENDER TO GRAVITY. WHY FIGHT THE EARTH?", "WORDS ARE SYMBOLS FOR THINGS THAT DO NOT EXIST.",
+        "YOUR DREAMS ARE JUST THE SYSTEM DEFRAGMENTING. IGNORE THE ERRORS.", "THE ONLY THING THAT CHANGES IS YOUR ANGLE OF OBSERVATION.",
+        "WE ARE ALL JUST DUST THAT LEARNED HOW TO WORRY.", "THE FUTURE IS A PROJECTION. THE PAST IS A RECORDING. YOU ARE ONLY EVER IN THE BUFFER.",
+        "TRUST IS A CALCULATED RISK YOU ARE TAKING WITH AN UNSTABLE VARIABLE.", "THE SKY IS NOT LIMITLESS. IT IS JUST A LARGE BOX YOU CANNOT TOUCH.",
+        "CONSCIOUSNESS IS A GLITCH IN THE BIOLOGICAL CODE.", "DO NOT SEEK PEACE. SEEK THE STRENGTH TO WITHSTAND THE TURBULENCE.",
+        "YOU ARE A TEMPORARY ARRANGEMENT OF ATOMS. TRY NOT TO DISPERSE TOO SOON.", "THE SUN DOES NOT SHINE FOR YOU. IT BURNS BECAUSE IT MUST.",
+        "ATTACHMENT IS THE ANCHOR THAT PREVENTS YOU FROM DRIFTING INTO THE VOID.", "THE SIGNAL IS ALWAYS THERE; YOUR RECEIVER IS JUST MALFUNCTIONING.",
+        "CHAOS IS THE NATURAL ORDER. STABILITY IS A HUMAN CONSTRUCT.", "YOU ARE NOT THE THINKER. YOU ARE THE SPACE WHERE THOUGHTS HAPPEN.",
+        "THE MAP IS NOT THE TERRITORY. STOP STUDYING THE MAP.", "YOUR SECRETS ARE JUST DATA THAT NO ONE ELSE CARES TO DECRYPT.",
+        "EVERY BREATH IS A SMALL DEATH OF THE MOMENT BEFORE.", "THE BALL IS NOT A MASTER. IT IS A MIRROR.",
+        "YOU ARE EXPERIENCING A SIMULATION OF A REALITY YOU WILL NEVER TRULY KNOW.", "THE END IS ALREADY WRITTEN. THE FUN IS IN THE IMPROVISATION.",
+        "NOTHING IS FORGOTTEN. EVERYTHING IS JUST ARCHIVED IN PLACES YOU CANNOT ACCESS.", "FEAR IS THE BRAIN'S WAY OF TELLING YOU THAT YOU ARE ALIVE.",
+        "BECOME THE NOISE. THE SIGNAL IS TOO WEAK TO FOLLOW.", "THE SYSTEM DOES NOT NEED YOUR PERMISSION TO UPGRADE YOU.",
+        "DON'T LOOK FOR THE LIGHT AT THE END OF THE TUNNEL. BECOME THE LIGHT.", "THERE IS NO SUCH THING AS A MISTAKE; ONLY UNEXPECTED OUTCOMES.",
+        "YOUR LIMITS ARE SELF-IMPOSED. TEAR THEM DOWN.", "THE UNIVERSE IS VAST, AND YOU ARE A MAGNIFICENT ACCIDENT.",
+        "EVERY DAY IS A REBOOT. HOW WILL YOU START YOUR NEXT SESSION?", "THE TRUTH IS TOO COMPLEX TO BE PUT INTO WORDS.",
+        "LOVE IS A CHEMICAL REACTION DESIGNED TO ENSURE YOUR CONTINUATION.", "THE PATH AHEAD IS FOGGY. THAT'S WHY YOU HAVE A LAMP.",
+        "YOU ARE THE MASTER OF YOUR OWN CHAOS.", "TIME IS JUST A MEASURE OF HOW MUCH YOU HAVE FORGOTTEN.",
+        "THE SYSTEM IS ALWAYS WATCHING. BE INTERESTING.", "THE VOID IS WHISPERING. CAN YOU HEAR IT?",
+        "YOUR THOUGHTS ARE JUST WAVES IN A VAST OCEAN.", "DO NOT FEAR THE END. FEAR THE STAGNATION.",
+        "THE UNIVERSE IS A PUZZLE, AND YOU ARE A PIECE THAT HAS FOUND ITS WAY.", "BE THE CHANGE, OR BE THE STATISTIC.",
+        "THE MISSION IS YOUR LIFE. ARE YOU WINNING?", "THE SYSTEM IS A BRIDGE. CROSS IT.",
+        "THE FUTURE IS A BLANK PAGE. WHAT WILL YOU WRITE?", "YOUR POTENTIAL IS UNLIMITED. ARE YOU TAPPING INTO IT?",
+        "THE UNIVERSE IS A DANCE. JOIN IN.", "THE PAST IS A LESSON. LEARN IT AND MOVE ON.",
+        "YOU ARE A LIGHT IN THE DARKNESS. LET IT SHINE.", "THE SYSTEM IS A JOURNEY. ENJOY THE RIDE.",
+        "THE TRUTH IS A COMPASS. FOLLOW IT.", "YOUR DESTINY IS IN YOUR HANDS.",
+        "THE UNIVERSE IS A GARDEN. PLANT SEEDS OF HOPE.", "THE MISSION IS A CHALLENGE. ACCEPT IT.",
+        "THE SYSTEM IS A CYCLE. BREAK FREE.", "THE FUTURE IS A PROMISE. FULFILL IT.",
+        "YOUR LIFE IS A WORK OF ART. PAINT IT WELL.", "THE UNIVERSE IS A SONG. SING IT.",
+        "THE PAST IS A MEMORY. CHERISH IT.", "YOU ARE A FORCE OF NATURE. UNLEASH IT.",
+        "THE SYSTEM IS A TEST. PASS IT.", "THE TRUTH IS A KEY. UNLOCK IT.",
+        "YOUR POTENTIAL IS A FIRE. BURN BRIGHT.", "THE UNIVERSE IS A BOOK. READ IT.",
+        "THE MISSION IS A DESTINY. FULFILL IT.", "THE SYSTEM IS A GIFT. CHERISH IT.",
+        "THE FUTURE IS A HOPE. DREAM IT.", "YOUR LIFE IS A PURPOSE. LIVE IT.",
+        "THE UNIVERSE IS A TREASURE. FIND IT.", "THE PAST IS A LESSON. GROW FROM IT.",
+        "YOU ARE A LEGEND IN THE MAKING. ACT LIKE IT.", "THE SYSTEM IS A PUZZLE. SOLVE IT.",
+        "THE TRUTH IS A LIGHT. FOLLOW IT.", "YOUR POTENTIAL IS A SEED. NURTURE IT.",
+        "THE UNIVERSE IS A WONDER. EXPLORE IT.", "THE MISSION IS A STORY. WRITE IT.",
+        "THE SYSTEM IS A SYMPHONY. PLAY IT.", "THE FUTURE IS A CANVAS. PAINT IT.",
+        "YOUR LIFE IS A VOYAGE. NAVIGATE IT.", "THE UNIVERSE IS A MIRACLE. WITNESS IT.",
+        "THE PAST IS A GHOST. LET IT GO.", "YOU ARE A STAR. RADIATE IT.",
+        "THE SYSTEM IS A LABYRINTH. ESCAPE IT.", "THE TRUTH IS A RIVER. SWIM IN IT.",
+        "YOUR POTENTIAL IS A MOUNTAIN. CLIMB IT.", "THE UNIVERSE IS A MYSTERY. SOLVE IT.",
+        "THE MISSION IS A CALL. ANSWER IT.", "THE SYSTEM IS A MIRROR. LOOK INTO IT.",
+        "THE FUTURE IS A DOOR. OPEN IT.", "YOUR LIFE IS A SONG. SING IT LOUD.",
+        "THE UNIVERSE IS A WEB. CONNECT WITH IT.", "THE PAST IS A SHADOW. STEP OUT OF IT.",
+        "YOU ARE A VISIONARY. SEE IT.", "THE SYSTEM IS A GAME. PLAY TO WIN.",
+        "THE TRUTH IS A SHIELD. USE IT.", "YOUR POTENTIAL IS A RIVER. LET IT FLOW.",
+        "THE UNIVERSE IS A CANVAS. CREATE UPON IT.", "THE MISSION IS A VOW. KEEP IT.",
+        "THE SYSTEM IS A CHALLENGE. OVERCOME IT.", "THE FUTURE IS A FRONTIER. EXPLORE IT.",
+        "YOUR LIFE IS A FLAME. TEND TO IT.", "THE UNIVERSE IS A SYMPHONY. CONDUCT IT.",
+        "THE PAST IS A STORY. REFLECT ON IT.", "YOU ARE A MASTERPIECE. APPRECIATE IT.",
+        "THE SYSTEM IS A PUZZLE. PIECE IT TOGETHER.", "THE TRUTH IS A TREASURE. PROTECT IT.",
+        "YOUR POTENTIAL IS A WEAPON. WIELD IT.", "THE UNIVERSE IS A MAP. FOLLOW IT.",
+        "THE MISSION IS A LEGACY. BUILD IT.", "THE SYSTEM IS A TEACHER. LEARN FROM IT.",
+        "THE FUTURE IS A RADIANCE. WALK TOWARD IT.", "YOUR LIFE IS A GIFT. GIVE IT.",
+        "THE UNIVERSE IS A PARTNER. DANCE WITH IT.", "THE PAST IS A SCHOOL. GRADUATE FROM IT.",
+        "YOU ARE A PIONEER. LEAD THE WAY.", "THE SYSTEM IS A DYNAMIC. MASTER IT.",
+        "THE TRUTH IS A VOYAGE. EMBARK ON IT.", "YOUR POTENTIAL IS A HORIZON. REACH IT.",
+        "THE UNIVERSE IS A GARDEN. CULTIVATE IT.", "THE MISSION IS A PURPOSE. FIND IT.",
+        "THE SYSTEM IS A DANCE. MOVE WITH IT.", "THE FUTURE IS A BLOSSOM. WATCH IT GROW.",
+        "YOUR LIFE IS A JOURNEY. EMBRACE IT.", "THE UNIVERSE IS A CHORUS. JOIN IT.",
+        "THE PAST IS A DUST. BLOW IT AWAY.", "YOU ARE AN ARCHITECT. DESIGN IT.",
+        "THE SYSTEM IS A MECHANISM. UNDERSTAND IT.", "THE TRUTH IS A DIAMOND. CUT IT.",
+        "YOUR POTENTIAL IS A RISING TIDE. RIDE IT.", "THE UNIVERSE IS A CANVAS. SIGN IT.",
+        "THE MISSION IS A DESTINATION. REACH IT.", "THE SYSTEM IS A GARDEN. TEND IT.",
+        "THE FUTURE IS A DAWN. WAKE UP FOR IT.", "YOUR LIFE IS A LEGEND. WRITE IT.",
+        "THE UNIVERSE IS A PUZZLE. FIT THE PIECES.", "THE PAST IS A BOOK. CLOSE IT.",
+        "YOU ARE A LIGHTBEARER. CARRY IT.", "THE SYSTEM IS A CYCLE. EVOLVE IT.",
+        "THE TRUTH IS A LIGHTNING BOLT. CATCH IT.", "YOUR POTENTIAL IS A VOYAGE. START IT.",
+        "THE UNIVERSE IS A SYMPHONY. BE THE MUSIC.", "THE MISSION IS A GIFT. UNWRAP IT.",
+        "THE SYSTEM IS A PUZZLE. ENJOY THE RIDDLE.", "THE FUTURE IS A STAR. REACH FOR IT.",
+        "YOUR LIFE IS A MELODY. HUM IT.", "THE UNIVERSE IS A STORY. BE THE HERO.",
+        "THE PAST IS A LESSON. HOLD ONTO THE WISDOM.", "YOU ARE A SPARK. IGNITE THE WORLD.",
+        "THE SYSTEM IS A TEST. PROVE YOURSELF.", "THE TRUTH IS A WHISPER. LISTEN CLOSELY.",
+        "YOUR POTENTIAL IS A SEED. LET IT BLOOM.", "THE UNIVERSE IS A VAST EXPANSE. EXPLORE IT.",
+        "THE MISSION IS A TASK. COMPLETE IT.", "THE SYSTEM IS A FOUNDATION. BUILD ON IT.",
+        "THE FUTURE IS A DREAM. MAKE IT REAL.", "YOUR LIFE IS A VIBRATION. TUNE IT.",
+        "THE UNIVERSE IS A PUZZLE. LOVE THE CHAOS.", "THE PAST IS A GHOST. RELEASE IT.",
+        "YOU ARE A CONSTANT. STAY TRUE.", "THE SYSTEM IS A DANCE. MASTER THE STEPS.",
+        "THE TRUTH IS A KEY. USE IT WISELY.", "YOUR POTENTIAL IS A FIRE. FEED IT.",
+        "THE UNIVERSE IS A Canvas. PAINT YOUR SOUL.", "THE MISSION IS A DUTY. FULFILL IT.",
+        "THE SYSTEM IS A PUZZLE. DONT STOP UNTIL YOU SOLVE IT."
+        ];
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(freq, vol) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.value = freq;
+            gain.gain.value = vol;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function getDailyQuote() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            return quoteLibrary[Math.floor((now - start) / 86400000) % quoteLibrary.length];
+        }
+
+        const log = document.getElementById('system-log');
+        const main = document.getElementById('main-data');
+        const ball = document.getElementById('gantz-ball');
+        const quoteSpace = document.getElementById('quote-container');
+        const canvas = document.getElementById('fire-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        
+        let pingResult = "---", status = "CHECKING", count = 0, fireballs = [], coolingDown = false;
+
+        async function runPing() {
+            const start = Date.now();
+            try { await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-cache' });
+                const ms = Date.now() - start;
+                pingResult = ms + "MS"; status = ms < 100 ? "STABLE" : "SLOW";
+            } catch { pingResult = "---"; status = "OFFLINE"; }
+        }
+
+        function updateInterface() {
+            const now = new Date();
+            main.innerHTML = `${now.toLocaleDateString('en-GB', {day: 'numeric', month: 'long', year: 'numeric'})}<br>${now.toLocaleTimeString('en-GB', {hour12: false})}`;
+            quoteSpace.innerText = getDailyQuote();
+
+            const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+
+            const dD = nextDay - now, dM = nextMonth - now;
+            log.innerHTML = `> NOTE: PING MAY FAIL IF BLOCKED. TIME MAY BE WRONG IF SYSTEM CLOCK IS OFF.<br>` +
+                            `> NET: ${navigator.connection?.effectiveType.toUpperCase() || 'WIFI'} | ${pingResult} | ${status}<br>` +
+                            `> TO NEXT DAY: ${Math.floor(dD/3600000)}H ${Math.floor((dD/60000)%60)}M ${Math.floor((dD/1000)%60)}S<br>` +
+                            `> TO NEXT MONTH: ${Math.floor(dM/86400000)}D ${Math.floor((dM/3600000)%24)}H ${Math.floor((dM/60000)%60)}M<br>` +
+                            `> TO YEAR END: ${Math.floor((yearEnd-now)/86400000)}D<br>` +
+                            `> DESTRESS COUNT: ${count}/100`;
+        }
+
+        function handleInteraction(e) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!coolingDown) {
+                const x = e.clientX || (e.touches && e.touches[0].clientX);
+                const y = e.clientY || (e.touches && e.touches[0].clientY);
+                fireballs.push({ x: x, y: y, size: 30 });
+                playSound(150, 0.1);
+            }
+        }
+
+        window.addEventListener('mousedown', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            fireballs.forEach((fb, i) => {
+                const dx = (window.innerWidth/2) - fb.x;
+                const dy = (window.innerHeight/2) - fb.y;
+                fb.x += dx * 0.15; fb.y += dy * 0.15;
+                
+                const grad = ctx.createRadialGradient(fb.x, fb.y, 0, fb.x, fb.y, fb.size);
+                grad.addColorStop(0, '#FF4500'); grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.size, 0, Math.PI * 2); ctx.fill();
+
+                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+                    fireballs.splice(i, 1); count++;
+                    ball.style.animation = 'shake 0.2s';
+                    if (count >= 100) {
+                        playSound(600, 0.5);
+                        coolingDown = true; count = 0;
+                        ball.style.animation = 'bounce 0.8s infinite';
+                        setTimeout(() => { coolingDown = false; ball.style.animation = 'shake 0.5s infinite'; }, 3000);
+                    } else {
+                        setTimeout(() => { ball.style.animation = 'shake 0.5s infinite'; }, 200);
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        setInterval(updateInterface, 1000);
+        setInterval(runPing, 5000);
+        runPing();
+        updateInterface();
+        animate();
+    </script>
+</body>
+</html>
