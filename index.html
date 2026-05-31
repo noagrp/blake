@@ -219,8 +219,8 @@ function getDailyQuote() {
             const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
 
             const dD = nextDay - now, dM = nextMonth - now;
-            log.innerHTML = `> NOTE: PING MAY FAIL IF BLOCKED. TIME MAY BE WRONG IF SYSTEM CLOCK IS WRONG.<br>` +
-                            `> NET: ${navigator.connection?.effectiveType.toUpperCase() || 'WIFI'} (4G, LTE & 5G ARE INCLUDED UNDER 4G CAT) | ${pingResult} | ${status}<br>` +
+            log.innerHTML = `> NOTE: PING MAY FAIL IF BLOCKED.<br>` +
+                            `> NET: ${navigator.connection?.effectiveType.toUpperCase() || 'WIFI'} (4G/LTE/5G UNDER 4G CAT) | ${pingResult} | ${status}<br>` +
                             `> TO NEXT DAY: ${Math.floor(dD/3600000)}H ${Math.floor((dD/60000)%60)}M ${Math.floor((dD/1000)%60)}S<br>` +
                             `> TO NEXT MONTH: ${Math.floor(dM/86400000)}D ${Math.floor((dM/3600000)%24)}H ${Math.floor((dM/60000)%60)}M<br>` +
                             `> TO YEAR END: ${Math.floor((yearEnd-now)/86400000)}D<br>` +
