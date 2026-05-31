@@ -184,10 +184,10 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-function getDailyQuote() {
-            // Selects a random index based on the library length
-            const randomIndex = Math.floor(Math.random() * quoteLibrary.length);
-            return quoteLibrary[randomIndex];
+        function getDailyQuote() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            return quoteLibrary[Math.floor((now - start) / 86400000) % quoteLibrary.length];
         }
 
         const log = document.getElementById('system-log');
